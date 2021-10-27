@@ -4,9 +4,11 @@ import {Modal, ModalBody, ModalFooter, ModalHeader} from 'reactstrap';
 import axios from 'axios';
 
 function App() {
-  const baseUrl = 'http://localhost/crudreact/apiframeworks/';
+  const baseUrl = 'http://localhost/CRUDReact/apiframes/';
   const [data, setData] = useState([]);
   const [modalInsertar, setModalInsertar] = useState(false);
+  const [modalEditar, setModalEditar] = useState(false);
+  const [modalEliminar, setModalEliminar] = useState(false);
   const [frameworkSeleccionado, setframeworkSeleccionado] = useState({
     id: '',
     nombre: '',
@@ -25,21 +27,86 @@ function App() {
     setModalInsertar(!modalInsertar);
   };
 
+  const abrirCerrarModalEditar = () => {
+    setModalEditar(!modalEditar);
+  };
+
+  const abrirCerrarModalEliminar = () => {
+    setModalEliminar(!modalEliminar);
+  };
+  const peticionGet = async () => {
+    await axios
+      .get(baseUrl)
+      .then((response) => {
+        setData(response.data);
+      })
+      .catch((error) => {
+        console.log();
+      });
+  };
+
   const peticionPost = async () => {
     var f = new FormData();
     f.append('nombre', frameworkSeleccionado.nombre);
     f.append('lanzamiento', frameworkSeleccionado.lanzamiento);
     f.append('desarrollador', frameworkSeleccionado.desarrollador);
     f.append('METHOD', 'POST');
-    await axios.post(baseUrl, f).then((response) => {
-      setData(data.concat(response.data));
-      abrirCerrarModalInsertar();
-    });
+    await axios
+      .post(baseUrl, f)
+      .then((response) => {
+        setData(data.concat(response.data));
+        abrirCerrarModalInsertar();
+      })
+      .catch((error) => {
+        console.log();
+      });
   };
-  const peticionGet = async () => {
-    await axios.get(baseUrl).then((response) => {
-      setData(response.data);
-    });
+
+  const peticionPut = async () => {
+    var f = new FormData();
+    f.append('nombre', frameworkSeleccionado.nombre);
+    f.append('lanzamiento', frameworkSeleccionado.lanzamiento);
+    f.append('desarrollador', frameworkSeleccionado.desarrollador);
+    f.append('METHOD', 'PUT');
+    await axios
+      .post(baseUrl, f, {params: {id: frameworkSeleccionado.id}})
+      .then((response) => {
+        var dataNueva = data;
+        dataNueva.map((framework) => {
+          if (framework.id === frameworkSeleccionado.id) {
+            framework.nombre = frameworkSeleccionado.nombre;
+            framework.lanzamiento = frameworkSeleccionado.lanzamiento;
+            framework.desarrollador = frameworkSeleccionado.desarrollador;
+          }
+        });
+        setData(dataNueva);
+        abrirCerrarModalEditar();
+      })
+      .catch((error) => {
+        console.log();
+      });
+  };
+
+  const peticionDelete = async () => {
+    var f = new FormData();
+    f.append('METHOD', 'DELETE');
+    await axios
+      .post(baseUrl, f, {params: {id: frameworkSeleccionado.id}})
+      .then((response) => {
+        setData(
+          data.filter((framework) => framework.id !== frameworkSeleccionado.id)
+        );
+        abrirCerrarModalEliminar();
+      })
+      .catch((error) => {
+        console.log();
+      });
+  };
+
+  const seleccionarFramework = (framework, caso) => {
+    setframeworkSeleccionado(framework);
+
+    caso === 'Editar' ? abrirCerrarModalEditar() : abrirCerrarModalEliminar();
   };
 
   useEffect(() => {
@@ -47,7 +114,7 @@ function App() {
   }, []);
 
   return (
-    <div style={{textAlign: 'center'}}>
+    <div style={{textAlign: 'center'}} className="container">
       <button
         className="btn btn-primary"
         onClick={() => abrirCerrarModalInsertar()}
@@ -71,8 +138,18 @@ function App() {
               <td>{framework.lanzamiento}</td>
               <td>{framework.desarrollador}</td>
               <td>
-                <button className="btn btn-primary">Editar</button>
-                <button className="btn btn-danger">Eliminar</button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => seleccionarFramework(framework, 'Editar')}
+                >
+                  Editar
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => seleccionarFramework(framework, 'Eliminar')}
+                >
+                  Eliminar
+                </button>
               </td>
             </tr>
           ))}
@@ -121,6 +198,77 @@ function App() {
             onClick={() => abrirCerrarModalInsertar()}
           >
             Cancelar
+          </button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={modalEditar}>
+        <ModalHeader>Editar Framework</ModalHeader>
+        <ModalBody>
+          <div className="form-group">
+            <label>Nombre: </label>
+            <br />
+            <input
+              type="text"
+              className="form-control"
+              name="nombre"
+              onChange={handleChange}
+              value={frameworkSeleccionado && frameworkSeleccionado.nombre}
+            />
+            <br />
+            <label>Lanzamiento: </label>
+            <br />
+            <input
+              type="text"
+              className="form-control"
+              name="lanzamiento"
+              onChange={handleChange}
+              value={frameworkSeleccionado && frameworkSeleccionado.lanzamiento}
+            />
+            <br />
+            <label>Desarrollador: </label>
+            <br />
+            <input
+              type="text"
+              className="form-control"
+              name="desarrollador"
+              onChange={handleChange}
+              value={
+                frameworkSeleccionado && frameworkSeleccionado.desarrollador
+              }
+            />
+            <br />
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <button className="btn btn-primary" onClick={() => peticionPut()}>
+            Editar
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={() => abrirCerrarModalEditar()}
+          >
+            Cancelar
+          </button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={modalEliminar}>
+        <ModalBody>
+          ¿Estas Seguro de eliminar el framework "
+          {frameworkSeleccionado && frameworkSeleccionado.nombre}"?
+        </ModalBody>
+        <ModalFooter>
+          <button className="btn btn-danger" onClick={() => peticionDelete()}>
+            {' '}
+            Si
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => abrirCerrarModalEliminar()}
+          >
+            {' '}
+            No
           </button>
         </ModalFooter>
       </Modal>
