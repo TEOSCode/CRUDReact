@@ -8,14 +8,41 @@ function App() {
   const [data, setData] = useState([]);
   const peticionGet = async () => {
     await axios.get().then((response) => {
-      console.log(response.data);
+      setData(response.data);
     });
   };
   useEffect(() => {
     peticionGet();
   }, []);
 
-  return <div></div>;
+  return (
+    <div>
+      <table className="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Lazamiento</th>
+            <th>Desarrollador</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((framework) => (
+            <tr key={framework.id}>
+              <td>{framework.id}</td>
+              <td>{framework.nombre}</td>
+              <td>{framework.lanzamiento}</td>
+              <td>{framework.desarrollador}</td>
+              <td>
+                <button className="btn btn-primary">Editar</button>
+                <button className="btn btn-danger">Eliminar</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 /*Ver que apsa con el git as */
 export default App;
